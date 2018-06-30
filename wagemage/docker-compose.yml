@@ -1,0 +1,43 @@
+version: "3"
+
+services:
+  mysql:
+    image: wagemage/mysql
+    container_name: wagemage-mysql-server
+    command: bash -c "service mysql start && bash"
+    ports:
+      - "3306:3306"
+    volumes:
+      - c:/projects/docker/wagemage/mysql_data:/var/lib/mysql
+    env_file:
+      - ./mysql.env
+    networks:
+       wagemage_net:
+         ipv4_address: 172.16.239.10
+    tty: true
+    stdin_open: true
+  ubuntu:
+    image: wagemage/ubuntu
+    container_name: wagemage-ubuntu-server
+    extra_hosts:
+      - "docker-wagemage-mysql-server:172.16.239.10"
+    command: bash -c "service nginx start & service php7.1-fpm start & bash"
+    ports:
+      - "80:80"
+    volumes:
+      - c:/projects/wagemage:/var/www/wagemage
+      - c:/projects/phabricator:/var/www/phabricator
+    networks:
+       wagemage_net:
+         ipv4_address: 172.16.239.12
+    tty: true
+    stdin_open: true
+  
+networks:
+  wagemage_net:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+      -
+        subnet: 172.16.239.0/24

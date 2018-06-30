@@ -1,0 +1,137 @@
+version: "3"
+
+services:
+  mysql:
+    image: tarasinio/mysql-server
+    container_name: mysql-server
+    command: bash -c "service mysql start && bash"
+    ports:
+      - "3306:3306"
+    volumes:
+      - c:/projects/mysql_data:/var/lib/mysql
+    env_file:
+      - ./mysql.env
+    networks:
+       app_net:
+         ipv4_address: 172.16.239.10
+    tty: true
+    stdin_open: true
+  nginx-proxy:
+    image: tarasinio/nginx-proxy
+    container_name: nginx-proxy
+    extra_hosts:
+      - "php70server:172.16.239.11"
+      - "php56server:172.16.239.12"
+      - "rabbitmq-server:172.16.239.17"
+      - "repophp70.vagrant.com:127.0.0.1"
+      - "repophp56.vagrant.com:127.0.0.1"
+      - "marketplace-m2.vagrant.local:127.0.0.1"
+      - "developer.vagrant.local:127.0.0.1"
+      - "magentoext.vagrant.local:127.0.0.1"
+      - "wagemage.io.local:127.0.0.1"
+      - "payment.vagrant.local:127.0.0.1"
+      - "devportal.marketplace.local:127.0.0.1"
+      - "static_content.marketplace.local:127.0.0.1"
+      - "api.marketplace.local:127.0.0.1"
+    command: bash -c "service nginx start && bash"
+    ports:
+      - "80:80"
+      - "443:443"
+    networks:
+       app_net:
+         ipv4_address: 172.16.239.15
+    tty: true
+    stdin_open: true
+  php70server:
+    image: tarasinio/php7.0-projects
+    container_name: php7.0
+    extra_hosts:
+      - "php70server:172.16.239.11"
+      - "php56server:172.16.239.12"
+      - "rabbitmq-server:172.16.239.17"
+      - "redis-server:172.16.239.18"
+      - "docker-mysql-server:172.16.239.10"
+      - "repophp70.vagrant.com:127.0.0.1"
+      - "repophp56.vagrant.com:127.0.0.1"
+      - "marketplace-m2.vagrant.local:127.0.0.1"
+      - "wagemage.io.local:127.0.0.1"
+      - "devportal.marketplace.local:127.0.0.1"
+      - "static_content.marketplace.local:127.0.0.1"
+      - "api.marketplace.local:127.0.0.1"
+    command: bash -c "service nginx start && service php7.0-fpm start && bash"
+    ports:
+      - "81:81"
+      - "444:444"
+    volumes:
+      - c:/projects/prphp70:/var/www/prphp70
+      - c:/projects/marketplace-m2:/var/www/marketplace-m2
+      - c:/projects/cloud:/var/www/cloud
+      - c:/projects/wagemage:/var/www/wagemage
+      - c:/projects/devportal:/var/www/devportal
+    networks:
+       app_net:
+         ipv4_address: 172.16.239.11
+    tty: true
+    stdin_open: true
+  php56server:
+    image: tarasinio/php5.6-projects
+    container_name: php5.6
+    extra_hosts:
+      - "rabbitmq-server:172.16.239.17"
+      - "redis-server:172.16.239.18"
+      - "docker-mysql-server:172.16.239.10"
+      - "marketplace.vagrant.com:127.0.0.1"
+      - "developer.vagrant.local:127.0.0.1"
+      - "magentoext.vagrant.local:127.0.0.1"
+      - "repophp56.vagrant.com:127.0.0.1"
+      - "marketplace-m2.vagrant.com:127.0.0.1"
+      - "php70server:172.16.239.11"
+      - "payment.vagrant.local:127.0.0.1"
+    command: bash -c "service nginx start && service php5.6-fpm start && bash"
+    ports:
+      - "82:82"
+      - "555:555"
+    volumes:
+      - c:/projects/marketplace:/var/www/marketplace
+      - c:/projects/magentoext:/var/www/magentoext
+      - c:/projects/prphp56:/var/www/prphp56
+      - c:/projects/cloud:/var/www/cloud
+      - c:/projects/payment:/var/www/payment
+    networks:
+       app_net:
+         ipv4_address: 172.16.239.12
+    tty: true
+    stdin_open: true
+  rabbitmq-server:
+    image: tarasinio/rabbitmq
+    container_name: rabbitmq-server
+    command: bash -c "service rabbitmq-server start && bash"
+    ports:
+      - "15672:15672"
+      - "25672:25672"
+      - "5672:5672"
+    networks:
+       app_net:
+         ipv4_address: 172.16.239.17
+    tty: true
+    stdin_open: true
+  redis-server:
+    image: redis
+    container_name: redis-server
+    command: bash -c "redis-server && bash"
+    ports:
+      - "6379:6379"
+    networks:
+       app_net:
+         ipv4_address: 172.16.239.18
+    tty: true
+    stdin_open: true
+
+networks:
+  app_net:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+      -
+        subnet: 172.16.239.0/24
